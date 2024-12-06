@@ -13,17 +13,11 @@ document.body.appendChild(renderer.domElement);
 // Orbit Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 
-// Add a Plane
-const planeWidth = 1; // World units
-const planeHeight = 1; // World units
-const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-
-// Position and orient the plane to align with the viewing frustum
-plane.position.z = -camera.near; // Align with the near plane
-scene.add(plane);
-
+// Add box
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+const box = new THREE.Mesh(boxGeometry, boxMaterial);
+scene.add(box);
 // Handle Resize
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -31,25 +25,31 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Calculate Screen-Space Width of the Plane
+// Calculate Screen-Space Width
 function calculateScreenProjectedWidth(object, camera) {
-    const vertices = object.geometry.attributes.position.array;
+    // Compute the bounding box for the object
+    const box = new THREE.Box3().setFromObject(object);
 
-    // Get the corners of the plane in world space
-    const corners = [];
-    for (let i = 0; i < vertices.length; i += 3) {
-        const vertex = new THREE.Vector3(vertices[i], vertices[i + 1], vertices[i + 2]);
-        vertex.applyMatrix4(object.matrixWorld); // Transform to world space
-        corners.push(vertex);
-    }
+    // Extract the corners of the bounding box
+    const corners = [
+        new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+        new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+        new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+        new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+        new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+        new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+        new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+        new THREE.Vector3(box.max.x, box.max.y, box.max.z),
+    ];
 
-    // Project the corners into screen space
+    // Transform the corners to world space and project to screen space
     const screenXCoordinates = corners.map(corner => {
+        corner.applyMatrix4(object.matrixWorld); // Transform to world space
         corner.project(camera); // Project to NDC
         return (corner.x * 0.5 + 0.5) * window.innerWidth; // Convert to screen space
     });
 
-    // Find the span of the X-coordinates
+    // Find the span of the X-coordinates in screen space
     const screenMinX = Math.min(...screenXCoordinates);
     const screenMaxX = Math.max(...screenXCoordinates);
 
@@ -60,10 +60,10 @@ function calculateScreenProjectedWidth(object, camera) {
 // Update Scale Bar
 function updateScaleBar() {
     const scaleBar = document.getElementById('scale-bar');
-    const screenWidth = calculateScreenProjectedWidth(plane, camera);
+    const screenWidth = calculateScreenProjectedWidth(box, camera);
 
     scaleBar.style.width = `${screenWidth}px`;
-    scaleBar.textContent = `Scale: ${planeWidth} units`;
+    scaleBar.textContent = `Scale: ${box.geometry.parameters.width} units`;
 }
 
 // Animation Loop
