@@ -1,29 +1,35 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-
+let scene
+let camera
+let renderer
+let controls
 let geometry
 let material
 let mesh
 
+document.addEventListener("DOMContentLoaded", async (event) => {
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+
 // Box
-// geometry = new THREE.BoxGeometry(1, 1, 1);
-// material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-// mesh = new THREE.Mesh(geometry, material);
+    geometry = new THREE.BoxGeometry(1, 1, 1);
+    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    mesh = new THREE.Mesh(geometry, material);
 
 // Twisted Torus
-geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-mesh = new THREE.Mesh(geometry, material);
+//     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
+//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+//     mesh = new THREE.Mesh(geometry, material);
 
 // Plane
 // const planeWidth = 1; // World units
@@ -35,20 +41,26 @@ mesh = new THREE.Mesh(geometry, material);
 // // Position and orient the plane to align with the viewing frustum
 // mesh.position.z = -camera.near; // Align with the near plane
 
+    scene.add(mesh)
 
+    animate();
 
+})
 
-scene.add(mesh)
-
-
-
-
-// Handle Resize
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
+})
+
+function animate() {
+
+    requestAnimationFrame(animate)
+
+    updateScaleBar(mesh)
+
+    renderer.render(scene, camera)
+}
 
 function calculateScreenProjectedWidth(object, camera) {
 
@@ -88,8 +100,7 @@ function calculateScreenProjectedWidth(object, camera) {
     return screenMaxX - screenMinX;
 }
 
-// Update Scale Bar
-function updateScaleBar() {
+function updateScaleBar(mesh) {
     const scaleBar = document.getElementById('scale-bar');
     const screenWidth = calculateScreenProjectedWidth(mesh, camera);
 
@@ -97,14 +108,3 @@ function updateScaleBar() {
     scaleBar.textContent = `Scale: ${mesh.geometry.parameters.width} units`;
 }
 
-// Animation Loop
-function animate() {
-    requestAnimationFrame(animate);
-
-    // Update the scale bar dynamically
-    updateScaleBar();
-
-    renderer.render(scene, camera);
-}
-
-animate();
