@@ -16,14 +16,14 @@ let material
 let mesh
 
 // Box
-geometry = new THREE.BoxGeometry(1, 1, 1);
-material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-mesh = new THREE.Mesh(geometry, material);
-
-// Twisted Torus
-// geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
+// geometry = new THREE.BoxGeometry(1, 1, 1);
 // material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
 // mesh = new THREE.Mesh(geometry, material);
+
+// Twisted Torus
+geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
+material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+mesh = new THREE.Mesh(geometry, material);
 
 // Plane
 // const planeWidth = 1; // World units
