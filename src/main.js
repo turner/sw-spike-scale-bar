@@ -11,10 +11,10 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
-const torusKnotGeometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-const torusKnotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-const torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
-scene.add(torusKnot);
+const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+const mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh)
 
 // Handle Resize
 window.addEventListener('resize', () => {
@@ -64,10 +64,10 @@ function calculateScreenProjectedWidth(object, camera) {
 // Update Scale Bar
 function updateScaleBar() {
     const scaleBar = document.getElementById('scale-bar');
-    const screenWidth = calculateScreenProjectedWidth(torusKnot, camera);
+    const screenWidth = calculateScreenProjectedWidth(mesh, camera);
 
     scaleBar.style.width = `${screenWidth}px`;
-    scaleBar.textContent = `Scale: ${torusKnot.geometry.parameters.width} units`;
+    scaleBar.textContent = `Scale: ${mesh.geometry.parameters.width} units`;
 }
 
 // Animation Loop
