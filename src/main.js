@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import {min} from "three/tsl"
 
 let scene
 let camera
@@ -22,7 +23,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     controls = new OrbitControls(camera, renderer.domElement);
 
 // Box
-    geometry = new THREE.BoxGeometry(1, 1, 1);
+    geometry = new THREE.BoxGeometry(3, 1, 2);
     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
     mesh = new THREE.Mesh(geometry, material);
 
@@ -62,49 +63,81 @@ function animate() {
     renderer.render(scene, camera)
 }
 
-function calculateScreenProjectedWidth(object, camera) {
+function calculateScreenProjectedDimensions(object, camera) {
 
-    const bbox = new THREE.Box3().setFromObject(object);
+    const box = new THREE.Box3().setFromObject(object);
 
-    // Extract bbox corners
-    const corners = [
-        new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.min.z),
-        new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.min.z),
-        new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.min.z),
-        new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.min.z),
-        new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.max.z),
-        new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.max.z),
-        new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.max.z),
-        new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z),
+    // Define corners of the bounding box
+    const corners =
+        [
+        new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+        new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+        new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+        new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+        new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+        new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+        new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+        new THREE.Vector3(box.max.x, box.max.y, box.max.z),
     ];
 
-    // 1) Transform corners to world space
-    // 2) Project corners to screen space
-    const screenXCoordinates = corners.map(corner => {
+    // Transform and project corners
+    const screenCoordinates = corners.map(corner => {
 
-        // to worldspace
-        corner.applyMatrix4(object.matrixWorld)
+        // Camera space
+        const xyzCamera = corner.clone().applyMatrix4(camera.matrixWorldInverse)
 
-        // to NDC space
-        corner.project(camera)
-        const ndc =  (corner.x * 0.5 + 0.5) * window.innerWidth
+        // World space
+        const xyzWorld = corner.clone().applyMatrix4(object.matrixWorld)
 
-        return ndc
-    })
+        // NDC space
+        const ndc = xyzWorld.clone().project(camera)
 
-    // Find the span of the X-coordinates in screen space
-    const screenMinX = Math.min(...screenXCoordinates);
-    const screenMaxX = Math.max(...screenXCoordinates);
+        const result =
+            {
+                x: (ndc.x * 0.5 + 0.5) * window.innerWidth,
 
-    // Return the screen-space width
-    return screenMaxX - screenMinX;
+                // Flip Y to match screen space
+                y: (ndc.y * -0.5 + 0.5) * window.innerHeight,
+
+                xyzWorld,
+
+                xyzCamera
+            };
+
+        return result
+    });
+
+    // xyzCamera min/max
+    const minX = Math.min(...screenCoordinates.map(({xyzCamera}) => xyzCamera.x))
+    const maxX = Math.max(...screenCoordinates.map(({xyzCamera}) => xyzCamera.x))
+    const minY = Math.min(...screenCoordinates.map(({xyzCamera}) => xyzCamera.y))
+    const maxY = Math.max(...screenCoordinates.map(({xyzCamera}) => xyzCamera.y))
+
+    // screen scale min/max
+    const screenMinX = Math.min(...screenCoordinates.map(({x}) => x))
+    const screenMaxX = Math.max(...screenCoordinates.map(({x}) => x))
+    const screenMinY = Math.min(...screenCoordinates.map(({y}) => y))
+    const screenMaxY = Math.max(...screenCoordinates.map(({y}) => y))
+
+    return {
+        width: screenMaxX - screenMinX,
+        height: screenMaxY - screenMinY,
+        w: maxX - minX,
+        h: maxY - minY,
+    };
 }
 
 function updateScaleBar(mesh) {
-    const scaleBar = document.getElementById('scale-bar');
-    const screenWidth = calculateScreenProjectedWidth(mesh, camera);
+    const { width, height, w, h } = calculateScreenProjectedDimensions(mesh, camera);
 
-    scaleBar.style.width = `${screenWidth}px`;
-    scaleBar.textContent = `Scale: ${mesh.geometry.parameters.width} units`;
+    // Update horizontal scale bar
+    const horizontalScaleBar = document.getElementById('scale-bar');
+    horizontalScaleBar.style.width = `${width}px`;
+    horizontalScaleBar.textContent = `${ w.toFixed(2) } nm`;
+
+    // Update vertical scale bar
+    const verticalScaleBar = document.getElementById('vertical-scale-bar');
+    verticalScaleBar.style.height = `${height}px`;
+    verticalScaleBar.textContent = `${ h.toFixed(2) } nm`;
 }
 
