@@ -66,17 +66,15 @@ function updateScaleBar(mesh) {
 
     const { ws, hs, ww, hh } = calculateTightFittingBounds(mesh, camera);
 
-    // Update horizontal scale bar
-    const horizontalScaleBar = document.getElementById('scale-bar');
+    // horizontal scale bar
+    const horizontalScaleBar = document.getElementById('horizontal-scale-bar');
     horizontalScaleBar.style.width = `${ws}px`;
-    // horizontalScaleBar.textContent = `Width: ${mesh.geometry.parameters.width || "N/A"} units`;
-    horizontalScaleBar.textContent = `Width: ${ ww } nm`;
+    horizontalScaleBar.textContent = `${ ww.toFixed(2) } nm`;
 
-    // Update vertical scale bar
+    // vertical scale bar
     const verticalScaleBar = document.getElementById('vertical-scale-bar');
     verticalScaleBar.style.height = `${hs}px`;
-    // verticalScaleBar.textContent = `Height: ${mesh.geometry.parameters.height || "N/A"} units`;
-    verticalScaleBar.textContent = `Height: ${ hh } nm`;
+    verticalScaleBar.textContent = `${ hh.toFixed(2) } nm`;
 }
 
 function calculateTightFittingBounds(object, camera) {
