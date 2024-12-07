@@ -3,7 +3,7 @@ body {
   overflow: hidden;
 }
 
-#scale-bar {
+#horizontal-scale-bar {
   position: absolute;
   bottom: 20px;
   left: 50%;
@@ -13,4 +13,16 @@ body {
   padding: 5px 10px;
   border-radius: 5px;
   font-family: Arial, sans-serif;
+}
+
+#vertical-scale-bar {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgb(255, 255, 255);
+  color: #515151;
+  width: fit-content;
+  padding: 10px 5px;
+  border-radius: 5px;
 }
