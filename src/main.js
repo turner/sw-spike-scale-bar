@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import {vectorMax, vectorMin} from "./utils.js"
 
 let scene
 let camera
@@ -82,7 +83,9 @@ function calculateTightFittingBounds(object, camera) {
 
     const vertices = object.geometry.attributes.position.array;
     const ndcList = [];
-    const xyzCameraList = [];
+
+    let xyzCameraMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
+    let xyzCameraMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
 
     for (let i = 0; i < vertices.length; i += 3) {
 
@@ -91,7 +94,8 @@ function calculateTightFittingBounds(object, camera) {
 
         // Camera space
         const xyzCamera = vertex.clone().applyMatrix4(camera.matrixWorldInverse)
-        xyzCameraList.push(xyzCamera)
+        xyzCameraMin = vectorMin(xyzCameraMin, xyzCamera)
+        xyzCameraMax = vectorMax(xyzCameraMin, xyzCamera)
 
         // World space
         const xyzWorld = vertex.clone().applyMatrix4(object.matrixWorld)
@@ -105,18 +109,11 @@ function calculateTightFittingBounds(object, camera) {
     const screenXList = ndcList.map(({ x }) => (x * 0.5 + 0.5) * window.innerWidth);
     const screenYList = ndcList.map(({ y }) => (y * -0.5 + 0.5) * window.innerHeight);
 
-    // xyzCamera min/max
-    const minX = Math.min(...xyzCameraList.map(({x}) => x))
-    const maxX = Math.max(...xyzCameraList.map(({x}) => x))
-
-    const minY = Math.min(...xyzCameraList.map(({y}) => y))
-    const maxY = Math.max(...xyzCameraList.map(({y}) => y))
-
     return {
         width: Math.max(...screenXList) - Math.min(...screenXList),
         height: Math.max(...screenYList) - Math.min(...screenYList),
-        ww: maxX - minX,
-        hh: maxY - minY
+        ww: xyzCameraMax.x - xyzCameraMin.x,
+        hh: xyzCameraMax.y - xyzCameraMin.y
     };
 }
 
