@@ -64,17 +64,17 @@ function animate() {
 
 function updateScaleBar(mesh) {
 
-    const { width, height, ww, hh } = calculateTightFittingBounds(mesh, camera);
+    const { ws, hs, ww, hh } = calculateTightFittingBounds(mesh, camera);
 
     // Update horizontal scale bar
     const horizontalScaleBar = document.getElementById('scale-bar');
-    horizontalScaleBar.style.width = `${width}px`;
+    horizontalScaleBar.style.width = `${ws}px`;
     // horizontalScaleBar.textContent = `Width: ${mesh.geometry.parameters.width || "N/A"} units`;
     horizontalScaleBar.textContent = `Width: ${ ww } nm`;
 
     // Update vertical scale bar
     const verticalScaleBar = document.getElementById('vertical-scale-bar');
-    verticalScaleBar.style.height = `${height}px`;
+    verticalScaleBar.style.height = `${hs}px`;
     // verticalScaleBar.textContent = `Height: ${mesh.geometry.parameters.height || "N/A"} units`;
     verticalScaleBar.textContent = `Height: ${ hh } nm`;
 }
@@ -82,10 +82,12 @@ function updateScaleBar(mesh) {
 function calculateTightFittingBounds(object, camera) {
 
     const vertices = object.geometry.attributes.position.array;
-    const ndcList = [];
 
     let xyzCameraMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
     let xyzCameraMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
+
+    let ndcMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
+    let ndcMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
 
     for (let i = 0; i < vertices.length; i += 3) {
 
@@ -95,23 +97,25 @@ function calculateTightFittingBounds(object, camera) {
         // Camera space
         const xyzCamera = vertex.clone().applyMatrix4(camera.matrixWorldInverse)
         xyzCameraMin = vectorMin(xyzCameraMin, xyzCamera)
-        xyzCameraMax = vectorMax(xyzCameraMin, xyzCamera)
+        xyzCameraMax = vectorMax(xyzCameraMax, xyzCamera)
 
         // World space
         const xyzWorld = vertex.clone().applyMatrix4(object.matrixWorld)
 
         // NDC space
         const ndc = xyzWorld.clone().project(camera)
+        ndcMin = vectorMin(ndcMin, ndc)
+        ndcMax = vectorMax(ndcMax, ndc)
 
-        ndcList.push(ndc)
     }
 
-    const screenXList = ndcList.map(({ x }) => (x * 0.5 + 0.5) * window.innerWidth);
-    const screenYList = ndcList.map(({ y }) => (y * -0.5 + 0.5) * window.innerHeight);
+
+    const screenXList = [ ndcMin.x *  .5 + .5, ndcMax.x *  .5 + .5 ].map(x => x * window.innerWidth)
+    const screenYList = [ ndcMin.y * -.5 + .5, ndcMax.y * -.5 + .5 ].map(y => y * window.innerHeight)
 
     return {
-        width: Math.max(...screenXList) - Math.min(...screenXList),
-        height: Math.max(...screenYList) - Math.min(...screenYList),
+        ws: Math.max(...screenXList) - Math.min(...screenXList),
+        hs: Math.max(...screenYList) - Math.min(...screenYList),
         ww: xyzCameraMax.x - xyzCameraMin.x,
         hh: xyzCameraMax.y - xyzCameraMin.y
     };
