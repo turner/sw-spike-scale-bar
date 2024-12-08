@@ -13,16 +13,19 @@ body {
   padding: 5px 10px;
   border-radius: 5px;
   font-family: Arial, sans-serif;
+  text-align: center; /* Ensures the text content is centered */
 }
 
 #vertical-scale-bar {
   position: absolute;
   left: 20px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%) rotate(-90deg); /* Adjusted for both centering and rotation */
   background: rgb(255, 255, 255);
   color: #515151;
   width: fit-content;
   padding: 10px 5px;
   border-radius: 5px;
+  text-align: center;
+  transform-origin: center; /* Rotate around the center of the element */
 }

@@ -73,7 +73,7 @@ function updateScaleBar(mesh) {
 
     // vertical scale bar
     const verticalScaleBar = document.getElementById('vertical-scale-bar');
-    verticalScaleBar.style.height = `${hs}px`;
+    verticalScaleBar.style.width = `${hs}px`;
     verticalScaleBar.textContent = `${ hh.toFixed(2) } nm`;
 }
 
