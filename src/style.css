@@ -7,25 +7,45 @@ body {
   position: absolute;
   bottom: 20px;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgb(255, 255, 255);
-  color: #515151;
-  padding: 5px 10px;
-  border-radius: 5px;
+
+  height: fit-content;
+
+  user-select: none;
+
   font-family: Arial, sans-serif;
-  text-align: center; /* Ensures the text content is centered */
+  text-align: center;
+  color: #515151;
+  background: rgb(255, 255, 255);
+  padding-top: 5px;
+  padding-bottom: 5px;
+
+  /*transform: translateX(-50%);*/
+
+
 }
 
 #vertical-scale-bar {
   position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translate(-50%, -50%) rotate(-90deg); /* Adjusted for both centering and rotation */
-  background: rgb(255, 255, 255);
-  color: #515151;
-  width: fit-content;
-  padding: 10px 5px;
-  border-radius: 5px;
+
+  user-select: none;
+
+  font-family: Arial, sans-serif;
   text-align: center;
-  transform-origin: center; /* Rotate around the center of the element */
+  color: #515151;
+  background: rgb(255, 255, 255);
+  padding-left: 5px;
+  padding-right: 5px;
+
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+
+  >span {
+    transform: rotate(180deg);
+    transform-origin: center center;
+    display: inline-block;
+  }
 }
