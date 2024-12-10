@@ -28,9 +28,15 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 //     mesh = new THREE.Mesh(geometry, material);
 
 // Twisted Torus
-    geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-    mesh = new THREE.Mesh(geometry, material);
+//     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
+//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+//     mesh = new THREE.Mesh(geometry, material);
+
+// Ellipsoid
+    geometry = new THREE.SphereGeometry(1, 32, 32)
+    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
+    mesh = new THREE.Mesh(geometry, material)
+    mesh.scale.set(2, 0.5, 1.5)
 
 // Plane
 // const planeWidth = 1; // World units
