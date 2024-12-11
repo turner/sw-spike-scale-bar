@@ -8,8 +8,6 @@ body {
   bottom: 20px;
   left: 50%;
 
-  height: fit-content;
-
   user-select: none;
 
   font-family: Arial, sans-serif;
@@ -18,9 +16,6 @@ body {
   background: rgb(255, 255, 255);
   padding-top: 5px;
   padding-bottom: 5px;
-
-  /*transform: translateX(-50%);*/
-
 
 }
 
@@ -36,7 +31,7 @@ body {
   padding-left: 5px;
   padding-right: 5px;
 
-  width: fit-content;
+
   display: flex;
   align-items: center;
   justify-content: center;

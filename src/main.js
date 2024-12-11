@@ -64,11 +64,110 @@ window.addEventListener('resize', () => {
 
 function animate() {
     requestAnimationFrame(animate)
-    updateScaleBar(mesh)
+
+    const bounds = calculateTightFittingBounds(mesh, camera)
+
+    updateScaleBars(bounds)
+
     renderer.render(scene, camera)
 }
 
-function updateScaleBar(mesh) {
+function updateScaleBars(bounds) {
+    // Horizontal Scale Bar
+    const horizontalContainer = document.getElementById('horizontal-scale-bar-container');
+    const horizontalSVG = document.getElementById('horizontal-scale-bar-svg');
+    const horizontalBar = document.getElementById('horizontal-scale-bar');
+    const horizontalLabel = document.getElementById('horizontal-scale-bar-label');
+
+    // Position the horizontal scale bar container
+    horizontalContainer.style.left = `${bounds.west}px`;
+    horizontalContainer.style.top = `${bounds.north + 20}px`; // Offset slightly above the object
+
+    // Update SVG dimensions and viewBox
+    horizontalSVG.setAttribute('width', `${bounds.width}px`);
+    horizontalSVG.setAttribute('viewBox', `0 0 ${bounds.width} 38`);
+
+    // Update rect dimensions explicitly
+    horizontalBar.setAttribute('width', `${bounds.width}`);
+    horizontalBar.setAttribute('height', `5`); // Fixed bar height
+
+    // Update label text
+    horizontalLabel.textContent = `${bounds.widthNM.toFixed(2)} nm`;
+
+    // Vertical Scale Bar
+    const verticalContainer = document.getElementById('vertical-scale-bar-container');
+    const verticalSVG = document.getElementById('vertical-scale-bar-svg');
+    const verticalBar = document.getElementById('vertical-scale-bar');
+    const verticalLabel = document.getElementById('vertical-scale-bar-label');
+
+    // Position the vertical scale bar container
+    verticalContainer.style.left = `${bounds.west - 38}px`; // Position to the left of the data
+    verticalContainer.style.top = `${bounds.south}px`;
+
+    // Update SVG dimensions and viewBox
+    verticalSVG.setAttribute('height', `${bounds.height}px`);
+    verticalSVG.setAttribute('viewBox', `0 0 38 ${bounds.height}`);
+
+    // Update rect dimensions explicitly
+    verticalBar.setAttribute('width', `5`); // Fixed bar width
+    verticalBar.setAttribute('height', `${bounds.height}`);
+
+    // Calculate the midpoint of the bar
+    const labelY = bounds.height / 2;
+
+    // Update label positioning
+    verticalLabel.setAttribute('y', `${labelY}`);
+    verticalLabel.setAttribute('transform', `rotate(-90, 18, ${labelY})`);
+    verticalLabel.textContent = `${bounds.heightNM.toFixed(2)} nm`;
+}
+
+
+
+function _____updateScaleBars(bounds) {
+    // Horizontal Scale Bar
+    const horizontalContainer = document.getElementById('horizontal-scale-bar-container');
+    const horizontalSVG = document.getElementById('horizontal-scale-bar-svg');
+    const horizontalBar = document.getElementById('horizontal-scale-bar');
+    const horizontalLabel = document.getElementById('horizontal-scale-bar-label');
+
+    // Position the horizontal scale bar container
+    horizontalContainer.style.left = `${bounds.west}px`;
+    horizontalContainer.style.top = `${bounds.north + 20}px`; // Offset slightly above the object
+
+    // Update SVG dimensions and viewBox
+    horizontalSVG.setAttribute('width', `${bounds.width}px`);
+    horizontalSVG.setAttribute('viewBox', `0 0 ${bounds.width} 38`);
+
+    // Update rect dimensions explicitly
+    horizontalBar.setAttribute('width', `${bounds.width}`);
+    horizontalBar.setAttribute('height', `5`); // Fixed bar height
+
+    // Update label text
+    horizontalLabel.textContent = `${bounds.widthNM.toFixed(2)} nm`;
+
+    // Vertical Scale Bar
+    const verticalContainer = document.getElementById('vertical-scale-bar-container');
+    const verticalSVG = document.getElementById('vertical-scale-bar-svg');
+    const verticalBar = document.getElementById('vertical-scale-bar');
+    const verticalLabel = document.getElementById('vertical-scale-bar-label');
+
+    // Position the vertical scale bar container
+    verticalContainer.style.left = `${bounds.west - 38}px`; // Position to the left of the data
+    verticalContainer.style.top = `${bounds.south}px`;
+
+    // Update SVG dimensions and viewBox
+    verticalSVG.setAttribute('height', `${bounds.height}px`);
+    verticalSVG.setAttribute('viewBox', `0 0 38 ${bounds.height}`);
+
+    // Update rect dimensions explicitly
+    verticalBar.setAttribute('width', `5`); // Fixed bar width
+    verticalBar.setAttribute('height', `${bounds.height}`);
+
+    // Update label text
+    verticalLabel.textContent = `${bounds.heightNM.toFixed(2)} nm`;
+}
+
+function ____updateScaleBar(mesh) {
     const bounds = calculateTightFittingBounds(mesh, camera);
 
     // Horizontal (X-axis) scale bar
@@ -87,21 +186,6 @@ function updateScaleBar(mesh) {
     // Update text inside the vertical scale bar
     const verticalLabel = verticalScaleBar.querySelector('span');
     verticalLabel.textContent = `${bounds.heightNM.toFixed(2)} nm`;
-}
-
-function ___updateScaleBar(mesh) {
-
-    const { width, height, widthNM, heightNM } = calculateTightFittingBounds(mesh, camera);
-
-    // horizontal scale bar
-    const horizontalScaleBar = document.getElementById('horizontal-scale-bar');
-    horizontalScaleBar.style.width = `${width}px`;
-    horizontalScaleBar.textContent = `${ widthNM.toFixed(2) } nm`;
-
-    // vertical scale bar
-    const verticalScaleBar = document.getElementById('vertical-scale-bar');
-    verticalScaleBar.style.width = `${height}px`;
-    verticalScaleBar.textContent = `${ heightNM.toFixed(2) } nm`;
 }
 
 function calculateTightFittingBounds(object, camera) {
@@ -158,67 +242,3 @@ function calculateTightFittingBounds(object, camera) {
     return { north, south, east, west, width, height, widthNM, heightNM }
 
 }
-
-function calculateScreenProjectedDimensions(object, camera) {
-
-    const bbox = new THREE.Box3().setFromObject(object);
-
-    const bbox_vertices =
-        [
-            new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.min.z),
-            new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.min.z),
-            new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.min.z),
-            new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.min.z),
-            new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.max.z),
-            new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.max.z),
-            new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.max.z),
-            new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z),
-        ];
-
-    // Transform and project corners
-    const coords = bbox_vertices.map(corner => {
-
-        // Camera space
-        const xyzCamera = corner.clone().applyMatrix4(camera.matrixWorldInverse)
-
-        // World space
-        const xyzWorld = corner.clone().applyMatrix4(object.matrixWorld)
-
-        // NDC space
-        const ndc = xyzWorld.clone().project(camera)
-
-        const result =
-            {
-                x: (ndc.x * 0.5 + 0.5) * window.innerWidth,
-
-                // Flip Y to match screen space
-                y: (ndc.y * -0.5 + 0.5) * window.innerHeight,
-
-                xyzWorld,
-
-                xyzCamera
-            };
-
-        return result
-    });
-
-    // xyzCamera min/max
-    const minX = Math.min(...coords.map(({xyzCamera}) => xyzCamera.x))
-    const maxX = Math.max(...coords.map(({xyzCamera}) => xyzCamera.x))
-    const minY = Math.min(...coords.map(({xyzCamera}) => xyzCamera.y))
-    const maxY = Math.max(...coords.map(({xyzCamera}) => xyzCamera.y))
-
-    // screen scale min/max
-    const screenMinX = Math.min(...coords.map(({x}) => x))
-    const screenMaxX = Math.max(...coords.map(({x}) => x))
-    const screenMinY = Math.min(...coords.map(({y}) => y))
-    const screenMaxY = Math.max(...coords.map(({y}) => y))
-
-    return {
-        width: screenMaxX - screenMinX,
-        height: screenMaxY - screenMinY,
-        w: maxX - minX,
-        h: maxY - minY,
-    };
-}
-
