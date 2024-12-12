@@ -32,6 +32,12 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
     mesh = new THREE.Mesh(geometry, material);
 
+// Ellipsoid
+//     geometry = new THREE.SphereGeometry(1, 32, 32)
+//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
+//     mesh = new THREE.Mesh(geometry, material)
+//     mesh.scale.set(2, 0.5, 1.5)
+
 // Plane
 // const planeWidth = 1; // World units
 // const planeHeight = 1; // World units
@@ -42,8 +48,8 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 // // Position and orient the plane to align with the viewing frustum
 // mesh.position.z = -camera.near; // Align with the near plane
 
-    const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
-    scene.add(bboxHelper)
+    // const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
+    // scene.add(bboxHelper)
     scene.add(mesh)
 
     animate();
@@ -63,18 +69,39 @@ function animate() {
 }
 
 function updateScaleBar(mesh) {
+    const bounds = calculateTightFittingBounds(mesh, camera);
 
-    const { ws, hs, ww, hh } = calculateTightFittingBounds(mesh, camera);
+    // Horizontal (X-axis) scale bar
+    const horizontalScaleBar = document.getElementById('horizontal-scale-bar');
+    horizontalScaleBar.style.left = `${ bounds.west}px`;
+    horizontalScaleBar.style.top = `${bounds.north + 32}px`;
+    horizontalScaleBar.style.width = `${bounds.width}px`;
+    horizontalScaleBar.textContent = `${bounds.widthNM.toFixed(2)} nm`;
+
+    // Vertical (Y-axis) scale bar
+    const verticalScaleBar = document.getElementById('vertical-scale-bar');
+    verticalScaleBar.style.left = `${bounds.west - 64}px`;
+    verticalScaleBar.style.top = `${bounds.south}px`;
+    verticalScaleBar.style.height = `${bounds.height}px`;
+
+    // Update text inside the vertical scale bar
+    const verticalLabel = verticalScaleBar.querySelector('span');
+    verticalLabel.textContent = `${bounds.heightNM.toFixed(2)} nm`;
+}
+
+function ___updateScaleBar(mesh) {
+
+    const { width, height, widthNM, heightNM } = calculateTightFittingBounds(mesh, camera);
 
     // horizontal scale bar
     const horizontalScaleBar = document.getElementById('horizontal-scale-bar');
-    horizontalScaleBar.style.width = `${ws}px`;
-    horizontalScaleBar.textContent = `${ ww.toFixed(2) } nm`;
+    horizontalScaleBar.style.width = `${width}px`;
+    horizontalScaleBar.textContent = `${ widthNM.toFixed(2) } nm`;
 
     // vertical scale bar
     const verticalScaleBar = document.getElementById('vertical-scale-bar');
-    verticalScaleBar.style.width = `${hs}px`;
-    verticalScaleBar.textContent = `${ hh.toFixed(2) } nm`;
+    verticalScaleBar.style.width = `${height}px`;
+    verticalScaleBar.textContent = `${ heightNM.toFixed(2) } nm`;
 }
 
 function calculateTightFittingBounds(object, camera) {
@@ -107,16 +134,29 @@ function calculateTightFittingBounds(object, camera) {
 
     }
 
+    // ndc: convert to 0 -> 1
+    const ndcMin01X = 0.5 * ndcMin.x + 0.5
+    const ndcMax01X = 0.5 * ndcMax.x + 0.5
 
-    const screenXList = [ ndcMin.x *  .5 + .5, ndcMax.x *  .5 + .5 ].map(x => x * window.innerWidth)
-    const screenYList = [ ndcMin.y * -.5 + .5, ndcMax.y * -.5 + .5 ].map(y => y * window.innerHeight)
+    // ndc: y-axis is flipped
+    const ndcMax01Y = -0.5 * ndcMin.y + 0.5
+    const ndcMin01Y = -0.5 * ndcMax.y + 0.5
 
-    return {
-        ws: Math.max(...screenXList) - Math.min(...screenXList),
-        hs: Math.max(...screenYList) - Math.min(...screenYList),
-        ww: xyzCameraMax.x - xyzCameraMin.x,
-        hh: xyzCameraMax.y - xyzCameraMin.y
-    };
+    // camera space extent (world space distances)
+    const widthNM = xyzCameraMax.x - xyzCameraMin.x
+    const heightNM = xyzCameraMax.y - xyzCameraMin.y
+
+    const south = ndcMin01Y * window.innerHeight
+    const north = ndcMax01Y * window.innerHeight
+
+    const west = ndcMin01X * window.innerWidth
+    const east = ndcMax01X * window.innerWidth
+
+    const width =  east - west
+    const height = north - south
+
+    return { north, south, east, west, width, height, widthNM, heightNM }
+
 }
 
 function calculateScreenProjectedDimensions(object, camera) {
