@@ -12,7 +12,9 @@ let mesh
 
 document.addEventListener("DOMContentLoaded", async (event) => {
 
-    scene = new THREE.Scene();
+    scene = new THREE.Scene()
+    scene.background = new THREE.Color(0xffffff)
+
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 5;
 
@@ -29,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
 // Twisted Torus
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
     mesh = new THREE.Mesh(geometry, material);
 
 // Ellipsoid
