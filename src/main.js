@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { QuickHull } from 'quickhull3d';
 import {vectorMax, vectorMin} from "./utils.js"
 
 let scene
@@ -26,9 +27,9 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
 // Twisted Torus
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-    // material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
-    // mesh = new THREE.Mesh(geometry, material);
-    // scene.add(mesh)
+    material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
+    mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh)
 
     // Pointcloud
     const numInteriorPoints = 5000; // Adjust for density
@@ -47,15 +48,44 @@ document.addEventListener("DOMContentLoaded", async (event) => {
         const offsetY = (Math.random() - 0.5) * 0.2;
         const offsetZ = (Math.random() - 0.5) * 0.2;
 
-        interiorPoints.push(baseX + offsetX, baseY + offsetY, baseZ + offsetZ);
+        interiorPoints.push([ baseX + offsetX, baseY + offsetY, baseZ + offsetZ ]);
     }
 
     // Create the point cloud for the interior
     const pointCloudGeometry = new THREE.BufferGeometry();
     pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints, 3));
     const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 });
-    const pointCloud = new THREE.Points(pointCloudGeometry, pointMaterial);
-    scene.add(pointCloud);
+    // const pointCloud = new THREE.Points(pointCloudGeometry, pointMaterial);
+    // scene.add(pointCloud);
+
+
+    // Generate the convex hull using Quickhull
+    const hull = new QuickHull(interiorPoints)
+    hull.build()
+
+    const hullVertices = hull.vertices;
+    const hullFaces = hull.collectFaces()
+
+    const hullPositions = [];
+    const hullIndices = [];
+    for (const [a, b, c]  of hullFaces) {
+
+        hullIndices.push(hullPositions.length / 3, hullPositions.length / 3 + 1, hullPositions.length / 3 + 2);
+
+        const [ aa, bb, cc ] = [ hullVertices[ a ].point, hullVertices[ b ].point, hullVertices[ c ].point ]
+
+        hullPositions.push(...aa, ...bb, ...cc);
+
+    }
+
+    const hullGeometry = new THREE.BufferGeometry()
+    hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(hullPositions, 3));
+    hullGeometry.setIndex(hullIndices);
+
+    const hullMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    const hullMesh = new THREE.Mesh(hullGeometry, hullMaterial);
+    scene.add(hullMesh);
+
 
     // const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
     // scene.add(bboxHelper)
