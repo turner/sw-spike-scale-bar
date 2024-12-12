@@ -24,41 +24,41 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
     controls = new OrbitControls(camera, renderer.domElement);
 
-// Box
-//     geometry = new THREE.BoxGeometry(3, 1, 2);
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-//     mesh = new THREE.Mesh(geometry, material);
-
 // Twisted Torus
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
-    material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
-    mesh = new THREE.Mesh(geometry, material);
+    // material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
+    // mesh = new THREE.Mesh(geometry, material);
+    // scene.add(mesh)
 
-// Ellipsoid
-//     geometry = new THREE.SphereGeometry(1, 32, 32)
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-//     mesh = new THREE.Mesh(geometry, material)
-//     mesh.scale.set(2, 0.5, 1.5)
+    // Pointcloud
+    const numInteriorPoints = 5000; // Adjust for density
+    const interiorPoints = [];
+    const positions = geometry.attributes.position.array;
 
-// Ellipsoid
-//     geometry = new THREE.SphereGeometry(1, 32, 32)
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-//     mesh = new THREE.Mesh(geometry, material)
-//     mesh.scale.set(2, 0.5, 1.5)
+    for (let i = 0; i < numInteriorPoints; i++) {
+        // Pick a random vertex from the original geometry
+        const idx = Math.floor(Math.random() * (positions.length / 3)) * 3;
+        const baseX = positions[idx];
+        const baseY = positions[idx + 1];
+        const baseZ = positions[idx + 2];
 
-// Plane
-// const planeWidth = 1; // World units
-// const planeHeight = 1; // World units
-// geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-// material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-// mesh = new THREE.Mesh(geometry, material);
-//
-// // Position and orient the plane to align with the viewing frustum
-// mesh.position.z = -camera.near; // Align with the near plane
+        // Add a small random offset to fill the interior
+        const offsetX = (Math.random() - 0.5) * 0.2; // Adjust multiplier for spread
+        const offsetY = (Math.random() - 0.5) * 0.2;
+        const offsetZ = (Math.random() - 0.5) * 0.2;
+
+        interiorPoints.push(baseX + offsetX, baseY + offsetY, baseZ + offsetZ);
+    }
+
+    // Create the point cloud for the interior
+    const pointCloudGeometry = new THREE.BufferGeometry();
+    pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints, 3));
+    const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 });
+    const pointCloud = new THREE.Points(pointCloudGeometry, pointMaterial);
+    scene.add(pointCloud);
 
     // const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
     // scene.add(bboxHelper)
-    scene.add(mesh)
 
     animate();
 
@@ -73,9 +73,8 @@ window.addEventListener('resize', () => {
 function animate() {
     requestAnimationFrame(animate)
 
-    const bounds = calculateTightFittingBounds(mesh, camera)
-
-    updateScaleBars(bounds)
+    // const bounds = calculateTightFittingBounds(mesh, camera)
+    // updateScaleBars(bounds)
 
     renderer.render(scene, camera)
 }
