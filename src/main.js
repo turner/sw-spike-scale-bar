@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
     mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh)
+    // scene.add(mesh)
 
     // Pointcloud generation
     const numInteriorPoints = 5000; // Adjust for density
@@ -68,6 +68,56 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     }, []);
 
 
+
+
+    // Create a canonical sphere geometry
+    const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true })
+
+    // Create an InstancedMesh for the spheres
+    const numSpheres = 16;
+    const sphereMesh = new THREE.InstancedMesh(sphereGeometry, sphereMaterial, numSpheres);
+
+    // Add random transformations to each instance
+    const tempMatrix = new THREE.Matrix4();
+    const displacement = 4
+    for (let i = 0; i < numSpheres; i++) {
+        const position = new THREE.Vector3(
+            (Math.random() - 0.5) * displacement, // Random X position
+            (Math.random() - 0.5) * displacement, // Random Y position
+            (Math.random() - 0.5) * displacement  // Random Z position
+        );
+
+        const rotation = new THREE.Euler(
+            Math.random() * Math.PI, // Random rotation around X
+            Math.random() * Math.PI, // Random rotation around Y
+            Math.random() * Math.PI  // Random rotation around Z
+        );
+
+        // const scale = new THREE.Vector3(
+        //     0.5 + Math.random(), // Random scale X
+        //     0.5 + Math.random(), // Random scale Y
+        //     0.5 + Math.random()  // Random scale Z
+        // );
+
+        const scale = new THREE.Vector3(1,1,1);
+
+        tempMatrix.compose(position, new THREE.Quaternion().setFromEuler(rotation), scale);
+        sphereMesh.setMatrixAt(i, tempMatrix);
+    }
+
+    // Add the InstancedMesh to the scene
+    scene.add(sphereMesh);
+
+
+
+
+
+
+
+
+
+
     // Convex Hull
     const hull = new QuickHull(cloudPoints)
     // const hull = new QuickHull(interiorPoints)
@@ -93,14 +143,15 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
     const hullMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
     const hullMesh = new THREE.Mesh(hullGeometry,  hullMaterial)
-    scene.add(hullMesh)
+
+    // scene.add(hullMesh)
 
 
 
 
 
 
-    const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
+    const bboxHelper = new THREE.BoxHelper(sphereMesh, 0xff0000)
     scene.add(bboxHelper)
 
 
