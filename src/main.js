@@ -73,29 +73,40 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     // const hull = new QuickHull(interiorPoints)
     hull.build()
 
-    // Create mesh from extracted points
-    const hullPositions = [];
-    const hullIndices = [];
+    // Create mesh from hull
     const hullFaces = hull.collectFaces()
+    const hullXYZ = [];
+    const hullIndices = [];
     for (const [a, b, c]  of hullFaces) {
 
-        let index = hullPositions.length/3
+        let index = hullXYZ.length/3
         hullIndices.push(index, ++index, ++index)
 
         const [ aa, bb, cc ] = [ hull.vertices[ a ].point, hull.vertices[ b ].point, hull.vertices[ c ].point ]
-        hullPositions.push(...aa, ...bb, ...cc)
+
+        hullXYZ.push(...aa, ...bb, ...cc)
     }
 
     const hullGeometry = new THREE.BufferGeometry()
-    hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(hullPositions, 3));
-    hullGeometry.setIndex(hullIndices);
+    hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(hullXYZ, 3))
+    hullGeometry.setIndex(hullIndices)
 
-    const hullMesh = new THREE.Mesh(hullGeometry,  new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true }));
-    scene.add(hullMesh);
+    const hullMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
+    const hullMesh = new THREE.Mesh(hullGeometry,  hullMaterial)
+    scene.add(hullMesh)
+
+
+
+
 
 
     const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
     scene.add(bboxHelper)
+
+
+
+
+
 
     animate();
 
