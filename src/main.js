@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh)
 
-    // Pointcloud
+    // Pointcloud generation
     const numInteriorPoints = 5000; // Adjust for density
     const interiorPoints = [];
     const positions = geometry.attributes.position.array;
@@ -52,15 +52,25 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     }
 
     // Create the point cloud for the interior
-    const pointCloudGeometry = new THREE.BufferGeometry();
-    pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints, 3));
+    const pointCloudGeometry = new THREE.BufferGeometry()
+    pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints.flat(), 3))
+
     const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 });
     // const pointCloud = new THREE.Points(pointCloudGeometry, pointMaterial);
     // scene.add(pointCloud);
 
+    const list = pointCloudGeometry.attributes.position.array;
+    const cloudPoints = list.reduce((acc, _, i) => {
+        if (i % 3 === 0) {
+            acc.push([list[i], list[i + 1], list[i + 2]]);
+        }
+        return acc;
+    }, []);
+
 
     // Convex Hull
-    const hull = new QuickHull(interiorPoints)
+    const hull = new QuickHull(cloudPoints)
+    // const hull = new QuickHull(interiorPoints)
     hull.build()
 
     // Create mesh from extracted points
