@@ -3,7 +3,14 @@ import * as THREE from "three"
 
 class ConvexHull {
 
-    constructor(xyzList) {
+    constructor(positionArray) {
+
+        const xyzList = positionArray.reduce((acc, _, i) => {
+            if (i % 3 === 0) {
+                acc.push([positionArray[i], positionArray[i + 1], positionArray[i + 2]]);
+            }
+            return acc;
+        }, []);
 
         const hull = new QuickHull(xyzList)
 

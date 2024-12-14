@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {vectorMax, vectorMin} from "./utils.js"
 import SphereCluster from "./sphereCluster.js"
 import ConvexHull from "./convexHull.js"
+import TwistedTorusPointcloud from "./twistedTorusPointcloud.js"
 
 let scene
 let camera
@@ -29,46 +30,12 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
     const twistedTorusMesh = new THREE.Mesh(geometry, material);
-    const twistedTorusPositions = twistedTorusMesh.geometry.attributes.position.array
     scene.add(twistedTorusMesh)
 
 
-
-    // Twisted Torus Pointcloud creation
-    const numInteriorPoints = 5000; // Adjust for density
-    const interiorPoints = [];
-
-    for (let i = 0; i < numInteriorPoints; i++) {
-        // Pick a random vertex from the original geometry
-        const idx = Math.floor(Math.random() * (twistedTorusPositions.length / 3)) * 3;
-        const baseX = twistedTorusPositions[idx];
-        const baseY = twistedTorusPositions[idx + 1];
-        const baseZ = twistedTorusPositions[idx + 2];
-
-        // Add a small random offset to fill the interior
-        const offsetX = (Math.random() - 0.5) * 0.2; // Adjust multiplier for spread
-        const offsetY = (Math.random() - 0.5) * 0.2;
-        const offsetZ = (Math.random() - 0.5) * 0.2;
-
-        interiorPoints.push([ baseX + offsetX, baseY + offsetY, baseZ + offsetZ ]);
-    }
-
     // Twisted Torus Pointcloud
-    const pointCloudGeometry = new THREE.BufferGeometry()
-    pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints.flat(), 3))
-
-    const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 });
-    const pointCloudMesh = new THREE.Points(pointCloudGeometry, pointMaterial);
-    // scene.add(pointCloudMesh);
-
-    const list = pointCloudMesh.geometry.attributes.position.array;
-    const cloudPoints = list.reduce((acc, _, i) => {
-        if (i % 3 === 0) {
-            acc.push([list[i], list[i + 1], list[i + 2]]);
-        }
-        return acc;
-    }, []);
-
+    const twistedTorusPointcloud = new TwistedTorusPointcloud(twistedTorusMesh.geometry.attributes.position.array, 5000)
+    // scene.add(twistedTorusPointcloud.mesh);
 
 
     // Sphere Cluster
@@ -76,9 +43,9 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     // scene.add(sphereCluster.mesh);
 
 
-
     // Convex Hull
-    const convexHull = new ConvexHull(cloudPoints)
+    const convexHull = new ConvexHull(twistedTorusMesh.geometry.attributes.position.array)
+    // const convexHull = new ConvexHull(twistedTorusPointcloud.mesh.geometry.attributes.position.array)
     scene.add(convexHull.mesh)
 
 
