@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
     const twistedTorusMesh = new THREE.Mesh(geometry, material);
-    scene.add(twistedTorusMesh)
+    // scene.add(twistedTorusMesh)
 
 
     // Twisted Torus Pointcloud
@@ -40,18 +40,19 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
     // Sphere Cluster
     const sphereCluster = new SphereCluster(0.5, 16)
-    // scene.add(sphereCluster.mesh);
+    scene.add(sphereCluster.mesh)
+
 
 
     // Convex Hull
-    const convexHull = new ConvexHull(twistedTorusMesh.geometry.attributes.position.array)
+    // const convexHull = new ConvexHull(twistedTorusMesh.geometry.attributes.position.array)
     // const convexHull = new ConvexHull(twistedTorusPointcloud.mesh.geometry.attributes.position.array)
+    const convexHull = new ConvexHull(sphereCluster.positionArray)
     scene.add(convexHull.mesh)
 
 
-
     // BBox Visualizer
-    const bboxHelper = new THREE.BoxHelper(twistedTorusMesh, 0xff0000)
+    const bboxHelper = new THREE.BoxHelper(sphereCluster.mesh, 0xff0000)
     scene.add(bboxHelper)
 
 

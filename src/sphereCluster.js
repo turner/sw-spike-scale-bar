@@ -36,7 +36,36 @@ class SphereCluster {
             this.mesh.setMatrixAt(i, matrix4);
         }
 
+        this.positionArray = getPositionArray(this.mesh)
+
     }
+}
+
+function getPositionArray(mesh) {
+
+    const geometry = mesh.geometry; // Canonical sphere geometry
+    const baseVertices = geometry.attributes.position.array; // Base sphere vertices
+
+    const matrix = new THREE.Matrix4();
+    const vertex = new THREE.Vector3();
+
+    const aggregateVertices = []; // Store all transformed vertices
+    for (let i = 0; i < mesh.count; i++) {
+
+        // Get the transformation matrix for the current instance
+        mesh.getMatrixAt(i, matrix);
+
+        // Transform canonical sphere vertices
+        for (let j = 0; j < baseVertices.length; j += 3) {
+
+            vertex.set(baseVertices[j], baseVertices[j + 1], baseVertices[j + 2]);
+            vertex.applyMatrix4(matrix);
+
+            aggregateVertices.push(vertex.x, vertex.y, vertex.z);
+        }
+    }
+
+    return aggregateVertices;
 }
 
 export default SphereCluster
