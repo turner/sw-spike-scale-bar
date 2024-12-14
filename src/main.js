@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { QuickHull } from 'quickhull3d';
 import {vectorMax, vectorMin} from "./utils.js"
+import SphereCluster from "./sphereCluster.js"
+import ConvexHull from "./convexHull.js"
 
 let scene
 let camera
@@ -9,7 +10,6 @@ let renderer
 let controls
 let geometry
 let material
-let mesh
 
 document.addEventListener("DOMContentLoaded", async (event) => {
 
@@ -25,23 +25,25 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
     controls = new OrbitControls(camera, renderer.domElement);
 
-// Twisted Torus
+    // Twisted Torus
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
-    mesh = new THREE.Mesh(geometry, material);
-    // scene.add(mesh)
+    const twistedTorusMesh = new THREE.Mesh(geometry, material);
+    const twistedTorusPositions = twistedTorusMesh.geometry.attributes.position.array
+    scene.add(twistedTorusMesh)
 
-    // Pointcloud generation
+
+
+    // Twisted Torus Pointcloud creation
     const numInteriorPoints = 5000; // Adjust for density
     const interiorPoints = [];
-    const positions = geometry.attributes.position.array;
 
     for (let i = 0; i < numInteriorPoints; i++) {
         // Pick a random vertex from the original geometry
-        const idx = Math.floor(Math.random() * (positions.length / 3)) * 3;
-        const baseX = positions[idx];
-        const baseY = positions[idx + 1];
-        const baseZ = positions[idx + 2];
+        const idx = Math.floor(Math.random() * (twistedTorusPositions.length / 3)) * 3;
+        const baseX = twistedTorusPositions[idx];
+        const baseY = twistedTorusPositions[idx + 1];
+        const baseZ = twistedTorusPositions[idx + 2];
 
         // Add a small random offset to fill the interior
         const offsetX = (Math.random() - 0.5) * 0.2; // Adjust multiplier for spread
@@ -51,15 +53,15 @@ document.addEventListener("DOMContentLoaded", async (event) => {
         interiorPoints.push([ baseX + offsetX, baseY + offsetY, baseZ + offsetZ ]);
     }
 
-    // Create the point cloud for the interior
+    // Twisted Torus Pointcloud
     const pointCloudGeometry = new THREE.BufferGeometry()
     pointCloudGeometry.setAttribute('position', new THREE.Float32BufferAttribute(interiorPoints.flat(), 3))
 
     const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 });
-    // const pointCloud = new THREE.Points(pointCloudGeometry, pointMaterial);
-    // scene.add(pointCloud);
+    const pointCloudMesh = new THREE.Points(pointCloudGeometry, pointMaterial);
+    // scene.add(pointCloudMesh);
 
-    const list = pointCloudGeometry.attributes.position.array;
+    const list = pointCloudMesh.geometry.attributes.position.array;
     const cloudPoints = list.reduce((acc, _, i) => {
         if (i % 3 === 0) {
             acc.push([list[i], list[i + 1], list[i + 2]]);
@@ -69,93 +71,21 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
 
 
-
-    // Create a canonical sphere geometry
-    const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true })
-
-    // Create an InstancedMesh for the spheres
-    const numSpheres = 16;
-    const sphereMesh = new THREE.InstancedMesh(sphereGeometry, sphereMaterial, numSpheres);
-
-    // Add random transformations to each instance
-    const tempMatrix = new THREE.Matrix4();
-    const displacement = 4
-    for (let i = 0; i < numSpheres; i++) {
-        const position = new THREE.Vector3(
-            (Math.random() - 0.5) * displacement, // Random X position
-            (Math.random() - 0.5) * displacement, // Random Y position
-            (Math.random() - 0.5) * displacement  // Random Z position
-        );
-
-        const rotation = new THREE.Euler(
-            Math.random() * Math.PI, // Random rotation around X
-            Math.random() * Math.PI, // Random rotation around Y
-            Math.random() * Math.PI  // Random rotation around Z
-        );
-
-        // const scale = new THREE.Vector3(
-        //     0.5 + Math.random(), // Random scale X
-        //     0.5 + Math.random(), // Random scale Y
-        //     0.5 + Math.random()  // Random scale Z
-        // );
-
-        const scale = new THREE.Vector3(1,1,1);
-
-        tempMatrix.compose(position, new THREE.Quaternion().setFromEuler(rotation), scale);
-        sphereMesh.setMatrixAt(i, tempMatrix);
-    }
-
-    // Add the InstancedMesh to the scene
-    scene.add(sphereMesh);
-
-
-
-
-
-
-
+    // Sphere Cluster
+    const sphereCluster = new SphereCluster(0.5, 16)
+    // scene.add(sphereCluster.mesh);
 
 
 
     // Convex Hull
-    const hull = new QuickHull(cloudPoints)
-    // const hull = new QuickHull(interiorPoints)
-    hull.build()
-
-    // Create mesh from hull
-    const hullFaces = hull.collectFaces()
-    const hullXYZ = [];
-    const hullIndices = [];
-    for (const [a, b, c]  of hullFaces) {
-
-        let index = hullXYZ.length/3
-        hullIndices.push(index, ++index, ++index)
-
-        const [ aa, bb, cc ] = [ hull.vertices[ a ].point, hull.vertices[ b ].point, hull.vertices[ c ].point ]
-
-        hullXYZ.push(...aa, ...bb, ...cc)
-    }
-
-    const hullGeometry = new THREE.BufferGeometry()
-    hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(hullXYZ, 3))
-    hullGeometry.setIndex(hullIndices)
-
-    const hullMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-    const hullMesh = new THREE.Mesh(hullGeometry,  hullMaterial)
-
-    // scene.add(hullMesh)
+    const convexHull = new ConvexHull(cloudPoints)
+    scene.add(convexHull.mesh)
 
 
 
-
-
-
-    const bboxHelper = new THREE.BoxHelper(sphereMesh, 0xff0000)
+    // BBox Visualizer
+    const bboxHelper = new THREE.BoxHelper(twistedTorusMesh, 0xff0000)
     scene.add(bboxHelper)
-
-
-
 
 
 
