@@ -1,6 +1,8 @@
 import * as THREE from "three"
+import ConvexHull from "./convexHull.js"
 
 class SphereCluster {
+
     constructor(radius, count) {
 
         const sphereGeometry = new THREE.SphereGeometry(radius, 16, 16);
@@ -37,6 +39,8 @@ class SphereCluster {
         }
 
         this.positionArray = getPositionArray(this.mesh)
+
+        this.hull = new ConvexHull(this.positionArray)
 
     }
 }

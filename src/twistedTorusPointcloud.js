@@ -1,4 +1,5 @@
 import * as THREE from "three"
+import ConvexHull from "./convexHull.js"
 
 class TwistedTorusPointcloud {
 
@@ -25,6 +26,8 @@ class TwistedTorusPointcloud {
         const material = new THREE.PointsMaterial({ color: 0xff0000, size: 0.05 })
 
         this.mesh = new THREE.Points(geometry, material)
+
+        this.hull = new ConvexHull(this.mesh.geometry.attributes.position.array)
 
     }
 
