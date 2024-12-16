@@ -33,15 +33,15 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
     twistedTorusMesh = new THREE.Mesh(geometry, material);
-    scene.add(twistedTorusMesh)
+    // scene.add(twistedTorusMesh)
     twistedTorusHull = new ConvexHull(twistedTorusMesh.geometry.attributes.position.array)
     // scene.add(convexHull.mesh)
 
 
     // Twisted Torus Pointcloud
     twistedTorusPointcloud = new TwistedTorusPointcloud(twistedTorusMesh.geometry.attributes.position.array, 5000)
-    // scene.add(twistedTorusPointcloud.mesh)
-    // scene.add(twistedTorusPointcloud.hull.mesh)
+    scene.add(twistedTorusPointcloud.mesh)
+    scene.add(twistedTorusPointcloud.hull.mesh)
 
 
     // Sphere Cluster
@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     // scene.add(sphereCluster.hull.mesh)
 
     // BBox Visualizer
-    const bboxHelper = new THREE.BoxHelper(sphereCluster.mesh, 0xff0000)
-    // scene.add(bboxHelper)
+    const bboxHelper = new THREE.BoxHelper(twistedTorusPointcloud.hull.mesh, 0xff0000)
+    scene.add(bboxHelper)
 
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 function animate() {
     requestAnimationFrame(animate)
 
-    const bounds = calculateTightFittingBounds(twistedTorusHull.mesh, camera)
+    const bounds = calculateTightFittingBounds(twistedTorusPointcloud.hull.mesh, camera)
     updateScaleBars(bounds)
 
     renderer.render(scene, camera)
