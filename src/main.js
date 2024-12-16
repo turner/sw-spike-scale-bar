@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {vectorMax, vectorMin} from "./utils.js"
+import SphereCluster from "./sphereCluster.js"
+import ConvexHull from "./convexHull.js"
+import TwistedTorusPointcloud from "./twistedTorusPointcloud.js"
 
 let scene
 let camera
@@ -8,8 +11,10 @@ let renderer
 let controls
 let geometry
 let material
-let mesh
-
+let twistedTorusMesh
+let twistedTorusHull
+let twistedTorusPointcloud
+let sphereCluster
 document.addEventListener("DOMContentLoaded", async (event) => {
 
     scene = new THREE.Scene()
@@ -24,60 +29,102 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
     controls = new OrbitControls(camera, renderer.domElement);
 
-// Box
-//     geometry = new THREE.BoxGeometry(3, 1, 2);
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-//     mesh = new THREE.Mesh(geometry, material);
-
-// Twisted Torus
+    // Twisted Torus
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16); // Customize as needed
     material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
-    mesh = new THREE.Mesh(geometry, material);
+    twistedTorusMesh = new THREE.Mesh(geometry, material);
+    scene.add(twistedTorusMesh)
+    twistedTorusHull = new ConvexHull(twistedTorusMesh.geometry.attributes.position.array)
+    // scene.add(convexHull.mesh)
 
-// Ellipsoid
-//     geometry = new THREE.SphereGeometry(1, 32, 32)
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-//     mesh = new THREE.Mesh(geometry, material)
-//     mesh.scale.set(2, 0.5, 1.5)
 
-// Ellipsoid
-//     geometry = new THREE.SphereGeometry(1, 32, 32)
-//     material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-//     mesh = new THREE.Mesh(geometry, material)
-//     mesh.scale.set(2, 0.5, 1.5)
+    // Twisted Torus Pointcloud
+    twistedTorusPointcloud = new TwistedTorusPointcloud(twistedTorusMesh.geometry.attributes.position.array, 5000)
+    // scene.add(twistedTorusPointcloud.mesh)
+    // scene.add(twistedTorusPointcloud.hull.mesh)
 
-// Plane
-// const planeWidth = 1; // World units
-// const planeHeight = 1; // World units
-// geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-// material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-// mesh = new THREE.Mesh(geometry, material);
-//
-// // Position and orient the plane to align with the viewing frustum
-// mesh.position.z = -camera.near; // Align with the near plane
 
-    // const bboxHelper = new THREE.BoxHelper(mesh, 0xff0000)
+    // Sphere Cluster
+    sphereCluster = new SphereCluster(0.5, 16)
+    // scene.add(sphereCluster.mesh)
+    // scene.add(sphereCluster.hull.mesh)
+
+    // BBox Visualizer
+    const bboxHelper = new THREE.BoxHelper(sphereCluster.mesh, 0xff0000)
     // scene.add(bboxHelper)
-    scene.add(mesh)
 
-    animate();
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    })
 
-})
+    animate()
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
 })
 
 function animate() {
     requestAnimationFrame(animate)
 
-    const bounds = calculateTightFittingBounds(mesh, camera)
-
+    const bounds = calculateTightFittingBounds(twistedTorusHull.mesh, camera)
     updateScaleBars(bounds)
 
     renderer.render(scene, camera)
+}
+
+function calculateTightFittingBounds(mesh, camera) {
+
+    const vertices = mesh.geometry.attributes.position.array;
+
+    let xyzCameraMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
+    let xyzCameraMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
+
+    let ndcMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
+    let ndcMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
+
+    for (let i = 0; i < vertices.length; i += 3) {
+
+        // Object space
+        const vertex = new THREE.Vector3(vertices[i], vertices[i + 1], vertices[i + 2])
+
+        // Camera space
+        const xyzCamera = vertex.clone().applyMatrix4(camera.matrixWorldInverse)
+        xyzCameraMin = vectorMin(xyzCameraMin, xyzCamera)
+        xyzCameraMax = vectorMax(xyzCameraMax, xyzCamera)
+
+        // World space
+        const xyzWorld = vertex.clone().applyMatrix4(mesh.matrixWorld)
+
+        // NDC space
+        const ndc = xyzWorld.clone().project(camera)
+        ndcMin = vectorMin(ndcMin, ndc)
+        ndcMax = vectorMax(ndcMax, ndc)
+
+    }
+
+    // ndc: convert to 0 -> 1
+    const ndcMin01X = 0.5 * ndcMin.x + 0.5
+    const ndcMax01X = 0.5 * ndcMax.x + 0.5
+
+    // ndc: y-axis is flipped
+    const ndcMax01Y = -0.5 * ndcMin.y + 0.5
+    const ndcMin01Y = -0.5 * ndcMax.y + 0.5
+
+    // camera space extent (world space distances)
+    const widthNM = xyzCameraMax.x - xyzCameraMin.x
+    const heightNM = xyzCameraMax.y - xyzCameraMin.y
+
+    const south = ndcMin01Y * window.innerHeight
+    const north = ndcMax01Y * window.innerHeight
+
+    const west = ndcMin01X * window.innerWidth
+    const east = ndcMax01X * window.innerWidth
+
+    const width =  east - west
+    const height = north - south
+
+    return { north, south, east, west, width, height, widthNM, heightNM }
+
 }
 
 function updateScaleBars(bounds) {
@@ -127,59 +174,4 @@ function updateScaleBars(bounds) {
     verticalLabel.setAttribute('y', `${labelY}`);
     verticalLabel.setAttribute('transform', `rotate(-90, 18, ${labelY})`);
     verticalLabel.textContent = `${bounds.heightNM.toFixed(2)} nm`;
-}
-
-function calculateTightFittingBounds(object, camera) {
-
-    const vertices = object.geometry.attributes.position.array;
-
-    let xyzCameraMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
-    let xyzCameraMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
-
-    let ndcMin = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
-    let ndcMax = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
-
-    for (let i = 0; i < vertices.length; i += 3) {
-
-        // Object space
-        const vertex = new THREE.Vector3(vertices[i], vertices[i + 1], vertices[i + 2])
-
-        // Camera space
-        const xyzCamera = vertex.clone().applyMatrix4(camera.matrixWorldInverse)
-        xyzCameraMin = vectorMin(xyzCameraMin, xyzCamera)
-        xyzCameraMax = vectorMax(xyzCameraMax, xyzCamera)
-
-        // World space
-        const xyzWorld = vertex.clone().applyMatrix4(object.matrixWorld)
-
-        // NDC space
-        const ndc = xyzWorld.clone().project(camera)
-        ndcMin = vectorMin(ndcMin, ndc)
-        ndcMax = vectorMax(ndcMax, ndc)
-
-    }
-
-    // ndc: convert to 0 -> 1
-    const ndcMin01X = 0.5 * ndcMin.x + 0.5
-    const ndcMax01X = 0.5 * ndcMax.x + 0.5
-
-    // ndc: y-axis is flipped
-    const ndcMax01Y = -0.5 * ndcMin.y + 0.5
-    const ndcMin01Y = -0.5 * ndcMax.y + 0.5
-
-    // camera space extent (world space distances)
-    const widthNM = xyzCameraMax.x - xyzCameraMin.x
-    const heightNM = xyzCameraMax.y - xyzCameraMin.y
-
-    const south = ndcMin01Y * window.innerHeight
-    const north = ndcMax01Y * window.innerHeight
-
-    const west = ndcMin01X * window.innerWidth
-    const east = ndcMax01X * window.innerWidth
-
-    const width =  east - west
-    const height = north - south
-
-    return { north, south, east, west, width, height, widthNM, heightNM }
-
 }
